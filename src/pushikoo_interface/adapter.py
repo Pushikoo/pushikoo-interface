@@ -6,7 +6,7 @@ __all__ = [
     "AdapterFrameworkContext",
     "AdapterInfo",
     # Data result
-    "GetResult",
+    "Detail",
     # Getter
     "Getter",
     "GetterClassConfig",
@@ -23,7 +23,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Generic, Literal, TypeVar
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from pushikoo_interface.struct import Struct
 
@@ -31,7 +31,6 @@ TADAPTERCLASSCONFIG = TypeVar("TADAPTERCLASSCONFIG", bound="AdapterClassConfig")
 TADAPTERINSTANCECONFIG = TypeVar(
     "TADAPTERINSTANCECONFIG", bound="AdapterInstanceConfig"
 )
-TCONFIGSERVICETYPE = TypeVar("TCONFIGSERVICETYPE")
 
 
 class AdapterInfo(BaseModel):
@@ -66,21 +65,35 @@ class Adapter(ABC, Generic[TADAPTERCLASSCONFIG, TADAPTERINSTANCECONFIG]):
     _default_class_config_type: type
     _default_instance_config_type: type
 
-    def __init__(self, id_: str, ctx: AdapterFrameworkContext) -> None:
-        super().__init__()
-        self.id = id_
-        self.ctx = ctx
+    id_: str
+    ctx: AdapterFrameworkContext
+    class_name: str
+    instance_name: str
+    class_storage_path: Path
+    instance_storage_path: Path
+    logger: logging.Logger
 
-        self.class_name = self.ctx.info.name
-        self.instance_name = self.class_name + "." + self.id
+    def __new__(cls, *args, **kwargs):
+        obj = super().__new__(cls)
 
-        storage_base_path = ctx.storage_base_path
-        self.class_storage_path = storage_base_path / self.class_name
-        self.instance_storage_path = storage_base_path / self.instance_name
-        self.class_storage_path.mkdir(parents=True, exist_ok=True)
-        self.instance_storage_path.mkdir(parents=True, exist_ok=True)
+        obj.id_ = kwargs.pop("id_", None)
+        obj.ctx = kwargs.pop("ctx", None)
 
-        self.logger = logging.getLogger(self.instance_name)
+        if obj.ctx is None or obj.id_ is None:
+            raise ValueError("Adapter requires both ctx and id_ to be provided")
+
+        obj.class_name = obj.ctx.info.name
+        obj.instance_name = f"{obj.class_name}.{obj.id_}"
+
+        storage_base_path = obj.ctx.storage_base_path
+        obj.class_storage_path = storage_base_path / obj.class_name
+        obj.instance_storage_path = storage_base_path / obj.instance_name
+        obj.class_storage_path.mkdir(parents=True, exist_ok=True)
+        obj.instance_storage_path.mkdir(parents=True, exist_ok=True)
+
+        obj.logger = logging.getLogger(obj.instance_name)
+
+        return obj
 
     @property
     def config(self) -> TADAPTERCLASSCONFIG:
@@ -97,10 +110,36 @@ class Adapter(ABC, Generic[TADAPTERCLASSCONFIG, TADAPTERINSTANCECONFIG]):
         return hash(self.instance_name)
 
 
-class GetResult(BaseModel):
-    ts: float
-    content: Struct
-    extra: dict
+class Detail(BaseModel):
+    model_config = ConfigDict(keyword_only=True)
+
+    ts: float = Field(description="10-digit integer Unix timestamp (decimals allowed)")
+    content: str | Struct = Field(description="Main content payload")
+
+    title: str | None = Field(
+        default=None, description="Title or headline of the content"
+    )
+    author_id: str | None = Field(
+        default=None, description="Unique identifier of the author"
+    )
+    author_name: str | None = Field(
+        default=None, description="Display name of the author"
+    )
+    url: str | list[str] = Field(
+        default_factory=list, description="Primary or related URLs for the content"
+    )
+    image: list[str] = Field(
+        default_factory=list, description="Image URLs associated with the content"
+    )
+    extra_detail: list[str] = Field(
+        default_factory=list,
+        description="Structured detailed data for content representation",
+    )
+
+    detail: dict = Field(
+        default_factory=dict,
+        description="Additional descriptive text or metadata details for message",
+    )
 
 
 class GetterClassConfig(AdapterClassConfig): ...
@@ -126,7 +165,7 @@ class Getter(
         ...
 
     @abstractmethod
-    def detail(self, id_: str | list[str]) -> GetResult:
+    def detail(self, id_: str | list[str]) -> Detail:
         """Get detail of specific id or ids. Must be overrided.
 
         Args:
