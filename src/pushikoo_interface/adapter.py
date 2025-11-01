@@ -1,31 +1,12 @@
-__all__ = [
-    # Core base types
-    "Adapter",
-    "AdapterClassConfig",
-    "AdapterInstanceConfig",
-    "AdapterFrameworkContext",
-    "AdapterInfo",
-    # Data result
-    "Detail",
-    # Getter
-    "Getter",
-    "GetterClassConfig",
-    "GetterInstanceConfig",
-    # Pusher
-    "Pusher",
-    "PusherClassConfig",
-    "PusherInstanceConfig",
-]
-
-
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Generic, Literal, TypeVar
+from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from pushikoo_interface.struct import Struct
+from pushikoo_interface import util
+from pushikoo_interface.structure import Struct
 
 TADAPTERCLASSCONFIG = TypeVar("TADAPTERCLASSCONFIG", bound="AdapterClassConfig")
 TADAPTERINSTANCECONFIG = TypeVar(
@@ -33,11 +14,9 @@ TADAPTERINSTANCECONFIG = TypeVar(
 )
 
 
-class AdapterInfo(BaseModel):
-    version: str
+class AdapterMeta(BaseModel):
     name: str
-    entry: str
-    type_: Literal["getter", "pusher"] = Field(alias="type", serialization_alias="type")
+    version: str
     author: str | None = None
     description: str | None = None
     url: str | None = None
@@ -45,7 +24,6 @@ class AdapterInfo(BaseModel):
 
 
 class AdapterFrameworkContext(ABC):
-    info: AdapterInfo
     storage_base_path: Path
 
     @abstractmethod
@@ -67,6 +45,7 @@ class Adapter(ABC, Generic[TADAPTERCLASSCONFIG, TADAPTERINSTANCECONFIG]):
 
     id_: str
     ctx: AdapterFrameworkContext
+    meta: AdapterMeta
     class_name: str
     instance_name: str
     class_storage_path: Path
@@ -79,10 +58,32 @@ class Adapter(ABC, Generic[TADAPTERCLASSCONFIG, TADAPTERINSTANCECONFIG]):
         obj.id_ = kwargs.pop("id_", None)
         obj.ctx = kwargs.pop("ctx", None)
 
+        dist_name, dist_version, dist_metadata = util.get_dist_meta(obj.__class__)
+
+        url = dist_metadata.get("Home-page")
+        if url is None:
+            url: str | None = dist_metadata.get("Project-URL", [None])[0]
+            if url:
+                url = url.split(",", 1)[1].strip()
+
+        obj.meta = AdapterMeta(
+            name=dist_name,
+            version=dist_version,
+            author=dist_metadata.get("Author"),
+            description=dist_metadata.get("Summary")
+            or dist_metadata.get("Description"),
+            url=url,
+            extra={
+                k: v
+                for k, v in dist_metadata.items()
+                if k not in {"Name", "Version", "Summary", "Author", "Home-page"}
+            },
+        )
+
         if obj.ctx is None or obj.id_ is None:
             raise ValueError("Adapter requires both ctx and id_ to be provided")
 
-        obj.class_name = obj.ctx.info.name
+        obj.class_name = obj.meta.name
         obj.instance_name = f"{obj.class_name}.{obj.id_}"
 
         storage_base_path = obj.ctx.storage_base_path
@@ -192,3 +193,8 @@ class Pusher(
 
     @abstractmethod
     def push(self, content: Struct) -> None: ...
+
+
+if __name__ == "__main__":
+
+    print(mt.model_dump(exclude="extra"))
