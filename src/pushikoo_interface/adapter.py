@@ -1,7 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Generic, TypeVar
+from typing import Any, Callable, Generic, TypeVar, final
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -27,11 +27,8 @@ class AdapterFrameworkContext(ABC):
     storage_base_path: Path
     proxies: dict[str, str]
 
-    @abstractmethod
-    def get_class_config(self) -> BaseModel: ...
-
-    @abstractmethod
-    def get_instance_config(self) -> BaseModel: ...
+    get_class_config: Callable[[], BaseModel]
+    get_instance_config: Callable[[], BaseModel]
 
 
 class AdapterClassConfig(BaseModel): ...
@@ -53,17 +50,18 @@ class Adapter(ABC, Generic[TADAPTERCLASSCONFIG, TADAPTERINSTANCECONFIG]):
     instance_storage_path: Path
     logger: logging.Logger
 
-    def __new__(cls, *args, **kwargs):
-        obj = super().__new__(cls)
+    @classmethod
+    @final
+    def create(cls, *args, id_: str, ctx: Any, **kwargs):
+        obj = cls.__new__(cls)
 
-        obj.id_ = kwargs.pop("id_", None)
-        obj.ctx = kwargs.pop("ctx", None)
+        obj.id_ = id_
+        obj.ctx = ctx
 
-        dist_name, dist_version, dist_metadata = util.get_dist_meta(obj.__class__)
-
-        url = dist_metadata.get("Home-page")
+        dist_name, dist_version, dist_metadata = util.get_dist_meta(cls)
+        url = dist_metadata.json.get("home_page")
         if url is None:
-            url: str | None = dist_metadata.get("Project-URL", [None])[0]
+            url: str | None = dist_metadata.json.get("project_url", [None])[0]
             if url:
                 url = url.split(",", 1)[1].strip()
 
@@ -81,19 +79,16 @@ class Adapter(ABC, Generic[TADAPTERCLASSCONFIG, TADAPTERINSTANCECONFIG]):
             },
         )
 
-        if obj.ctx is None or obj.id_ is None:
-            raise ValueError("Adapter requires both ctx and id_ to be provided")
-
         obj.class_name = obj.meta.name
         obj.instance_name = f"{obj.class_name}.{obj.id_}"
-
-        storage_base_path = obj.ctx.storage_base_path
-        obj.class_storage_path = storage_base_path / obj.class_name
-        obj.instance_storage_path = storage_base_path / obj.instance_name
+        storage_base = obj.ctx.storage_base_path
+        obj.class_storage_path = storage_base / obj.class_name
+        obj.instance_storage_path = storage_base / obj.instance_name
         obj.class_storage_path.mkdir(parents=True, exist_ok=True)
         obj.instance_storage_path.mkdir(parents=True, exist_ok=True)
-
         obj.logger = logging.getLogger(obj.instance_name)
+
+        cls.__init__(obj, *args, **kwargs)
 
         return obj
 
@@ -181,8 +176,15 @@ class Getter(
     def details(self, ids: list[str]) -> Detail:
         """Get detail of specific ids as a single Detail.
 
+        Different types of messages have different semantic aggregation granularity
+        - Some messages (such as long-content game updates) can only be processed separately;
+        - Some messages, such as short, frequent updates, can be combined into a single logical message.
+        Therefore, adapter developers can implement this method,
+        if framework option "getter_instance.prefer_details" is True, this method will be called preferentially.
+        This method is not enforced, and if it is not implemented, it will fallback to `detail`.
+
         Args:
-            id_: id
+            ids: id
 
         Returns:
             GetResult: Result
