@@ -25,6 +25,7 @@ class AdapterMeta(BaseModel):
 
 class AdapterFrameworkContext(ABC):
     storage_base_path: Path
+    proxies: dict[str, str]
 
     @abstractmethod
     def get_class_config(self) -> BaseModel: ...
@@ -193,8 +194,3 @@ class Pusher(
 
     @abstractmethod
     def push(self, content: Struct) -> None: ...
-
-
-if __name__ == "__main__":
-
-    print(mt.model_dump(exclude="extra"))
