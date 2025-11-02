@@ -167,8 +167,8 @@ class Getter(
         ...
 
     @abstractmethod
-    def detail(self, id_: str | list[str]) -> Detail:
-        """Get detail of specific id or ids. Must be overrided.
+    def detail(self, id_: str) -> Detail:
+        """Get detail of a specific id. Must be overrided.
 
         Args:
             id_: id
@@ -177,6 +177,17 @@ class Getter(
             GetResult: Result
         """
         ...
+
+    def details(self, ids: list[str]) -> Detail:
+        """Get detail of specific ids as a single Detail.
+
+        Args:
+            id_: id
+
+        Returns:
+            GetResult: Result
+        """
+        raise NotImplementedError()
 
 
 class PusherClassConfig(AdapterClassConfig): ...
