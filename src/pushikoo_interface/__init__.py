@@ -11,6 +11,7 @@ from pushikoo_interface.adapter import (
     Pusher,
     PusherClassConfig,
     PusherInstanceConfig,
+    get_adapter_config_types,
 )
 from pushikoo_interface.structure import (
     Struct,
@@ -38,6 +39,8 @@ __all__ = [
     "Pusher",
     "PusherClassConfig",
     "PusherInstanceConfig",
+    # util
+    "get_adapter_config_types"
     # Struct
     "StructElement",
     "StructText",

@@ -1,7 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Callable, Generic, TypeVar, final
+from typing import Any, Callable, Generic, TypeVar, final, get_args, get_origin
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -25,8 +25,8 @@ class AdapterMeta(BaseModel):
 
 class AdapterFrameworkContext(ABC):
     storage_base_path: Path
-    proxies: dict[str, str]
 
+    get_proxies: Callable[[], dict[str, str]]
     get_class_config: Callable[[], BaseModel]
     get_instance_config: Callable[[], BaseModel]
 
@@ -50,14 +50,8 @@ class Adapter(ABC, Generic[TADAPTERCLASSCONFIG, TADAPTERINSTANCECONFIG]):
     instance_storage_path: Path
     logger: logging.Logger
 
-    @classmethod
-    @final
-    def create(cls, *args, id_: str, ctx: Any, **kwargs):
-        obj = cls.__new__(cls)
-
-        obj.id_ = id_
-        obj.ctx = ctx
-
+    @staticmethod
+    def _get_meta(cls):
         dist_name, dist_version, dist_metadata = util.get_dist_meta(cls)
         url = dist_metadata.json.get("home_page")
         if url is None:
@@ -65,7 +59,7 @@ class Adapter(ABC, Generic[TADAPTERCLASSCONFIG, TADAPTERINSTANCECONFIG]):
             if url:
                 url = url.split(",", 1)[1].strip()
 
-        obj.meta = AdapterMeta(
+        meta = AdapterMeta(
             name=dist_name,
             version=dist_version,
             author=dist_metadata.get("Author"),
@@ -78,6 +72,19 @@ class Adapter(ABC, Generic[TADAPTERCLASSCONFIG, TADAPTERINSTANCECONFIG]):
                 if k not in {"Name", "Version", "Summary", "Author", "Home-page"}
             },
         )
+        return meta
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.meta = Adapter._get_meta(cls)
+
+    @classmethod
+    @final
+    def create(cls, *args, id_: str, ctx: Any, **kwargs):
+        obj = cls.__new__(cls)
+
+        obj.id_ = id_
+        obj.ctx = ctx
 
         obj.class_name = obj.meta.name
         obj.instance_name = f"{obj.class_name}.{obj.id_}"
@@ -207,3 +214,53 @@ class Pusher(
 
     @abstractmethod
     def push(self, content: Struct) -> None: ...
+
+
+def get_adapter_config_types(
+    cls: type,
+) -> tuple[type[AdapterClassConfig], type[AdapterInstanceConfig]]:
+    """Return generic config types for an Adapter/Getter/Pusher subclass.
+
+    Given a class (possibly subclass of Adapter/Getter/Pusher), attempt to
+    extract its generic parameters (class-config model, instance-config model).
+    Falls back to the class attributes `_default_class_config_type` and
+    `_default_instance_config_type` if generics are not explicitly specified.
+    If still unavailable, returns the base `AdapterClassConfig` and
+    `AdapterInstanceConfig`.
+    """
+
+    # 1) Inspect generic bases to find concrete args provided to Adapter/Getter/Pusher
+    def _find_generic_args(c: type) -> tuple[type | None, type | None]:
+        for base in getattr(c, "__orig_bases__", ()):  # type: ignore[attr-defined]
+            origin = get_origin(base)
+            if origin in {Adapter, Getter, Pusher}:
+                args = get_args(base)
+                if len(args) == 2:
+                    a0, a1 = args
+                    # Ensure these are types
+                    if isinstance(a0, type) and isinstance(a1, type):
+                        return a0, a1
+        return None, None
+
+    # Walk MRO to find first class with explicit generic args
+    class_cfg_t: type | None = None
+    inst_cfg_t: type | None = None
+    for c in cls.__mro__:
+        a0, a1 = _find_generic_args(c)
+        if a0 is not None and a1 is not None:
+            class_cfg_t, inst_cfg_t = a0, a1
+            break
+
+    # 2) Fallback to declared default types on the class hierarchy
+    if class_cfg_t is None:
+        class_cfg_t = getattr(cls, "_default_class_config_type", None)
+    if inst_cfg_t is None:
+        inst_cfg_t = getattr(cls, "_default_instance_config_type", None)
+
+    # 3) Final fallback to base config models
+    if not isinstance(class_cfg_t, type):
+        class_cfg_t = AdapterClassConfig
+    if not isinstance(inst_cfg_t, type):
+        inst_cfg_t = AdapterInstanceConfig
+
+    return class_cfg_t, inst_cfg_t
