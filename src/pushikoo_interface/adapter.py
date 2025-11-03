@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from pushikoo_interface import util
 from pushikoo_interface.structure import Struct
 
-TADAPTERCLASSCONFIG = TypeVar("TADAPTERCLASSCONFIG", bound="AdapterClassConfig")
+TADAPTERCONFIG = TypeVar("TADAPTERCONFIG", bound="AdapterConfig")
 TADAPTERINSTANCECONFIG = TypeVar(
     "TADAPTERINSTANCECONFIG", bound="AdapterInstanceConfig"
 )
@@ -27,26 +27,26 @@ class AdapterFrameworkContext(ABC):
     storage_base_path: Path
 
     get_proxies: Callable[[], dict[str, str]]
-    get_class_config: Callable[[], BaseModel]
+    get_config: Callable[[], BaseModel]
     get_instance_config: Callable[[], BaseModel]
 
 
-class AdapterClassConfig(BaseModel): ...
+class AdapterConfig(BaseModel): ...
 
 
 class AdapterInstanceConfig(BaseModel): ...
 
 
-class Adapter(ABC, Generic[TADAPTERCLASSCONFIG, TADAPTERINSTANCECONFIG]):
-    _default_class_config_type: type
+class Adapter(ABC, Generic[TADAPTERCONFIG, TADAPTERINSTANCECONFIG]):
+    _default_config_type: type
     _default_instance_config_type: type
 
     id_: str
     ctx: AdapterFrameworkContext
     meta: AdapterMeta
-    class_name: str
+    adapter_name: str
     instance_name: str
-    class_storage_path: Path
+    adapter_storage_path: Path
     instance_storage_path: Path
     logger: logging.Logger
 
@@ -86,12 +86,12 @@ class Adapter(ABC, Generic[TADAPTERCLASSCONFIG, TADAPTERINSTANCECONFIG]):
         obj.id_ = id_
         obj.ctx = ctx
 
-        obj.class_name = obj.meta.name
-        obj.instance_name = f"{obj.class_name}.{obj.id_}"
+        obj.adapter_name = obj.meta.name
+        obj.instance_name = f"{obj.adapter_name}.{obj.id_}"
         storage_base = obj.ctx.storage_base_path
-        obj.class_storage_path = storage_base / obj.class_name
+        obj.adapter_storage_path = storage_base / obj.adapter_name
         obj.instance_storage_path = storage_base / obj.instance_name
-        obj.class_storage_path.mkdir(parents=True, exist_ok=True)
+        obj.adapter_storage_path.mkdir(parents=True, exist_ok=True)
         obj.instance_storage_path.mkdir(parents=True, exist_ok=True)
         obj.logger = logging.getLogger(obj.instance_name)
 
@@ -100,8 +100,8 @@ class Adapter(ABC, Generic[TADAPTERCLASSCONFIG, TADAPTERINSTANCECONFIG]):
         return obj
 
     @property
-    def config(self) -> TADAPTERCLASSCONFIG:
-        return self.ctx.get_class_config()
+    def config(self) -> TADAPTERCONFIG:
+        return self.ctx.get_config()
 
     @property
     def instance_config(self) -> TADAPTERINSTANCECONFIG:
@@ -146,17 +146,17 @@ class Detail(BaseModel):
     )
 
 
-class GetterClassConfig(AdapterClassConfig): ...
+class GetterConfig(AdapterConfig): ...
 
 
 class GetterInstanceConfig(AdapterInstanceConfig): ...
 
 
 class Getter(
-    Adapter[TADAPTERCLASSCONFIG, TADAPTERINSTANCECONFIG],
-    Generic[TADAPTERCLASSCONFIG, TADAPTERINSTANCECONFIG],
+    Adapter[TADAPTERCONFIG, TADAPTERINSTANCECONFIG],
+    Generic[TADAPTERCONFIG, TADAPTERINSTANCECONFIG],
 ):
-    _default_class_config_type = GetterClassConfig
+    _default_config_type = GetterConfig
     _default_instance_config_type = GetterInstanceConfig
 
     @abstractmethod
@@ -199,17 +199,17 @@ class Getter(
         raise NotImplementedError()
 
 
-class PusherClassConfig(AdapterClassConfig): ...
+class PusherConfig(AdapterConfig): ...
 
 
 class PusherInstanceConfig(AdapterInstanceConfig): ...
 
 
 class Pusher(
-    Adapter[TADAPTERCLASSCONFIG, TADAPTERINSTANCECONFIG],
-    Generic[TADAPTERCLASSCONFIG, TADAPTERINSTANCECONFIG],
+    Adapter[TADAPTERCONFIG, TADAPTERINSTANCECONFIG],
+    Generic[TADAPTERCONFIG, TADAPTERINSTANCECONFIG],
 ):
-    _default_class_config_type = PusherClassConfig
+    _default_config_type = PusherConfig
     _default_instance_config_type = PusherInstanceConfig
 
     @abstractmethod
@@ -218,14 +218,14 @@ class Pusher(
 
 def get_adapter_config_types(
     cls: type,
-) -> tuple[type[AdapterClassConfig], type[AdapterInstanceConfig]]:
+) -> tuple[type[AdapterConfig], type[AdapterInstanceConfig]]:
     """Return generic config types for an Adapter/Getter/Pusher subclass.
 
     Given a class (possibly subclass of Adapter/Getter/Pusher), attempt to
     extract its generic parameters (class-config model, instance-config model).
-    Falls back to the class attributes `_default_class_config_type` and
+    Falls back to the class attributes `_default_config_type` and
     `_default_instance_config_type` if generics are not explicitly specified.
-    If still unavailable, returns the base `AdapterClassConfig` and
+    If still unavailable, returns the base `AdapterConfig` and
     `AdapterInstanceConfig`.
     """
 
@@ -243,24 +243,24 @@ def get_adapter_config_types(
         return None, None
 
     # Walk MRO to find first class with explicit generic args
-    class_cfg_t: type | None = None
+    adapter_cfg_t: type | None = None
     inst_cfg_t: type | None = None
     for c in cls.__mro__:
         a0, a1 = _find_generic_args(c)
         if a0 is not None and a1 is not None:
-            class_cfg_t, inst_cfg_t = a0, a1
+            adapter_cfg_t, inst_cfg_t = a0, a1
             break
 
     # 2) Fallback to declared default types on the class hierarchy
-    if class_cfg_t is None:
-        class_cfg_t = getattr(cls, "_default_class_config_type", None)
+    if adapter_cfg_t is None:
+        adapter_cfg_t = getattr(cls, "_default_config_type", None)
     if inst_cfg_t is None:
         inst_cfg_t = getattr(cls, "_default_instance_config_type", None)
 
     # 3) Final fallback to base config models
-    if not isinstance(class_cfg_t, type):
-        class_cfg_t = AdapterClassConfig
+    if not isinstance(adapter_cfg_t, type):
+        adapter_cfg_t = AdapterConfig
     if not isinstance(inst_cfg_t, type):
         inst_cfg_t = AdapterInstanceConfig
 
-    return class_cfg_t, inst_cfg_t
+    return adapter_cfg_t, inst_cfg_t

@@ -1,15 +1,15 @@
 from pushikoo_interface.adapter import (
     Adapter,
-    AdapterClassConfig,
+    AdapterConfig,
     AdapterFrameworkContext,
     AdapterInstanceConfig,
     AdapterMeta,
     Detail,
     Getter,
-    GetterClassConfig,
+    GetterConfig,
     GetterInstanceConfig,
     Pusher,
-    PusherClassConfig,
+    PusherConfig,
     PusherInstanceConfig,
     get_adapter_config_types,
 )
@@ -25,7 +25,7 @@ from pushikoo_interface.structure import (
 __all__ = [
     # Core base types
     "Adapter",
-    "AdapterClassConfig",
+    "AdapterConfig",
     "AdapterInstanceConfig",
     "AdapterFrameworkContext",
     "AdapterMeta",
@@ -33,11 +33,11 @@ __all__ = [
     "Detail",
     # Getter
     "Getter",
-    "GetterClassConfig",
+    "GetterConfig",
     "GetterInstanceConfig",
     # Pusher
     "Pusher",
-    "PusherClassConfig",
+    "PusherConfig",
     "PusherInstanceConfig",
     # util
     "get_adapter_config_types"
