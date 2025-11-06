@@ -41,14 +41,13 @@ class Adapter(ABC, Generic[TADAPTERCONFIG, TADAPTERINSTANCECONFIG]):
     _default_config_type: type
     _default_instance_config_type: type
 
-    id_: str
+    identifier: str
     ctx: AdapterFrameworkContext
     meta: AdapterMeta
     adapter_name: str
     instance_name: str
     adapter_storage_path: Path
     instance_storage_path: Path
-    logger: logging.Logger
 
     @staticmethod
     def _get_meta(cls):
@@ -80,20 +79,19 @@ class Adapter(ABC, Generic[TADAPTERCONFIG, TADAPTERINSTANCECONFIG]):
 
     @classmethod
     @final
-    def create(cls, *args, id_: str, ctx: Any, **kwargs):
+    def create(cls, *args, identifier: str, ctx: Any, **kwargs):
         obj = cls.__new__(cls)
 
-        obj.id_ = id_
+        obj.identifier = identifier
         obj.ctx = ctx
 
         obj.adapter_name = obj.meta.name
-        obj.instance_name = f"{obj.adapter_name}.{obj.id_}"
+        obj.instance_name = f"{obj.adapter_name}.{obj.identifier}"
         storage_base = obj.ctx.storage_base_path
         obj.adapter_storage_path = storage_base / obj.adapter_name
         obj.instance_storage_path = storage_base / obj.instance_name
         obj.adapter_storage_path.mkdir(parents=True, exist_ok=True)
         obj.instance_storage_path.mkdir(parents=True, exist_ok=True)
-        obj.logger = logging.getLogger(obj.instance_name)
 
         cls.__init__(obj, *args, **kwargs)
 
