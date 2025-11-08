@@ -41,11 +41,10 @@ class Adapter(ABC, Generic[TADAPTERCONFIG, TADAPTERINSTANCECONFIG]):
     _default_config_type: type
     _default_instance_config_type: type
 
-    identifier: str
     ctx: AdapterFrameworkContext
     meta: AdapterMeta
     adapter_name: str
-    instance_name: str
+    identifier: str
     adapter_storage_path: Path
     instance_storage_path: Path
 
@@ -81,15 +80,13 @@ class Adapter(ABC, Generic[TADAPTERCONFIG, TADAPTERINSTANCECONFIG]):
     @final
     def create(cls, *args, identifier: str, ctx: Any, **kwargs):
         obj = cls.__new__(cls)
-
-        obj.identifier = identifier
         obj.ctx = ctx
 
         obj.adapter_name = obj.meta.name
-        obj.instance_name = f"{obj.adapter_name}.{obj.identifier}"
+        obj.identifier = identifier
         storage_base = obj.ctx.storage_base_path
         obj.adapter_storage_path = storage_base / obj.adapter_name
-        obj.instance_storage_path = storage_base / obj.instance_name
+        obj.instance_storage_path = obj.adapter_storage_path / obj.identifier
         obj.adapter_storage_path.mkdir(parents=True, exist_ok=True)
         obj.instance_storage_path.mkdir(parents=True, exist_ok=True)
 
@@ -106,10 +103,10 @@ class Adapter(ABC, Generic[TADAPTERCONFIG, TADAPTERINSTANCECONFIG]):
         return self.ctx.get_instance_config()
 
     def __str__(self) -> str:
-        return self.instance_name
+        return f"{self.adapter_name}.{self.identifier}"
 
     def __hash__(self) -> int:
-        return hash(self.instance_name)
+        return hash(str(self))
 
 
 class Detail(BaseModel):
@@ -130,7 +127,7 @@ class Detail(BaseModel):
     url: str | list[str] = Field(
         default_factory=list, description="Primary or related URLs for the content"
     )
-    image: list[str] = Field(
+    image: list[str] = Field(  # TODO: list[str] | list[dict[str,str]] for image alt
         default_factory=list, description="Image URLs associated with the content"
     )
     extra_detail: list[str] = Field(
@@ -162,24 +159,24 @@ class Getter(
         """Get newest lists. Must be overrided.
 
         Returns:
-            list[str]: Lists of ids.
+            list[str]: Lists of identifiers.
         """
         ...
 
     @abstractmethod
-    def detail(self, id_: str) -> Detail:
-        """Get detail of a specific id. Must be overrided.
+    def detail(self, identifier: str) -> Detail:
+        """Get detail of a specific identifier. Must be overrided.
 
         Args:
-            id_: id
+            identifier: identifier
 
         Returns:
             GetResult: Result
         """
         ...
 
-    def details(self, ids: list[str]) -> Detail:
-        """Get detail of specific ids as a single Detail.
+    def details(self, identifiers: list[str]) -> Detail:
+        """Get detail of specific identifiers as a single Detail.
 
         Different types of messages have different semantic aggregation granularity
         - Some messages (such as long-content game updates) can only be processed separately;
@@ -189,7 +186,7 @@ class Getter(
         This method is not enforced, and if it is not implemented, it will fallback to `detail`.
 
         Args:
-            ids: id
+            identifiers: identifiers
 
         Returns:
             GetResult: Result
