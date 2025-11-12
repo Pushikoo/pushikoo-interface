@@ -18,6 +18,7 @@ class AdapterMeta(BaseModel):
     name: str
     version: str
     author: str | None = None
+    summary: str | None = None
     description: str | None = None
     url: str | None = None
     extra: dict[str, Any] = Field(default_factory=dict)
@@ -61,13 +62,21 @@ class Adapter(ABC, Generic[TADAPTERCONFIG, TADAPTERINSTANCECONFIG]):
             name=dist_name,
             version=dist_version,
             author=dist_metadata.get("Author"),
-            description=dist_metadata.get("Summary")
-            or dist_metadata.get("Description"),
+            summary=dist_metadata.get("Summary"),
+            description=dist_metadata.get("Description"),
             url=url,
             extra={
                 k: v
                 for k, v in dist_metadata.items()
-                if k not in {"Name", "Version", "Summary", "Author", "Home-page"}
+                if k
+                not in {
+                    "Name",
+                    "Version",
+                    "Summary",
+                    "Description",
+                    "Author",
+                    "Home-page",
+                }
             },
         )
         return meta
