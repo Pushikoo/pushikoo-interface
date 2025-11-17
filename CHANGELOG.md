@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/Pushikoo/pushikoo-interface/compare/v0.1.1...v0.2.0) (2025-11-17)
+
+
+### Features
+
+* **test:** add adapter testing utilities with basic flow validation ([a12e4ff](https://github.com/Pushikoo/pushikoo-interface/commit/a12e4ff5dacc4df2217fee37bd7429824f4792c1))
+
 ## [0.1.1](https://github.com/Pushikoo/pushikoo-interface/compare/v0.1.0...v0.1.1) (2025-11-17)
 
 
