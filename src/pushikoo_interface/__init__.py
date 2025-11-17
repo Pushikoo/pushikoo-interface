@@ -21,6 +21,7 @@ from pushikoo_interface.structure import (
     StructTitle,
     StructURL,
 )
+from pushikoo_interface.tester import get_adapter_test_env, run_getter_basic_flow
 
 __all__ = [
     # Core base types
@@ -48,4 +49,7 @@ __all__ = [
     "StructImage",
     "StructURL",
     "Struct",
+    # Testing
+    "get_adapter_test_env",
+    "run_getter_basic_flow",
 ]
