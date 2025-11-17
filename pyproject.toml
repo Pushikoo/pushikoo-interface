@@ -12,12 +12,11 @@ dependencies = ["pydantic"]
 description = "Adapter interface definitions for Pushikoo"
 name = "pushikoo-interface"
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.10"
 dynamic = ['version']
 
 [project.optional-dependencies]
-dev = ["black", "isort", "flake8", "pytest", "pre-commit"]
-build = ["build"]
+dev = ["ruff", "pytest"]
 
 [project.urls]
 "Homepage" = "https://github.com/Pushikoo/pushikoo-interface"
