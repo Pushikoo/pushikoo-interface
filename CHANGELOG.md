@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/Pushikoo/pushikoo-interface/compare/v0.1.0...v0.1.1) (2025-11-17)
+
+
+### Miscellaneous Chores
+
+* Trigger release-please ([4ac8d97](https://github.com/Pushikoo/pushikoo-interface/commit/4ac8d973a095f74fc7ffc5efa517f19c51723f47))
+
 ## [0.1.0](https://github.com/Pushikoo/pushikoo-interface/compare/v0.0.11...v0.1.0) (2025-11-17)
 
 
