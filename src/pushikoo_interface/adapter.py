@@ -1,4 +1,3 @@
-import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Callable, Generic, TypeVar, final, get_args, get_origin
@@ -6,7 +5,7 @@ from typing import Any, Callable, Generic, TypeVar, final, get_args, get_origin
 from pydantic import BaseModel, ConfigDict, Field
 
 from pushikoo_interface import util
-from pushikoo_interface.structure import Struct
+from pushikoo_interface.structure import Struct, StructImage
 
 TADAPTERCONFIG = TypeVar("TADAPTERCONFIG", bound="AdapterConfig")
 TADAPTERINSTANCECONFIG = TypeVar(
@@ -136,9 +135,18 @@ class Detail(BaseModel):
     url: str | list[str] = Field(
         default_factory=list, description="Primary or related URLs for the content"
     )
-    image: list[str] = Field(  # TODO: list[str] | list[dict[str,str]] for image alt
-        default_factory=list, description="Image URLs associated with the content"
+    image: list[str | StructImage] = Field(
+        default_factory=list,
+        description=(
+            "List of image resources associated with the content. Each entry must be either:\n"
+            "- A string URI\n"
+            "- A StructImage object\n"
+            "Image URI. Accepts valid URI including:\n"
+            "- Local files via 'file://' scheme (e.g., file:///path/to/image.png)\n"
+            "- Remote images via 'http://' or 'https://'\n"
+        ),
     )
+
     extra_detail: list[str] = Field(
         default_factory=list,
         description="Structured detailed data for content representation",

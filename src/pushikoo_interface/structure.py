@@ -1,10 +1,11 @@
 from abc import ABC
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class StructElement(BaseModel, ABC):
     type: str
+    model_config = ConfigDict(keyword_only=True, extra="allow")
 
     def __str__(self) -> str:
         return ""
@@ -45,18 +46,22 @@ class StructTitle(StructText):
 
 class StructImage(StructElement):
     type: str = "image"
-    source: list[str] | str
-    alt: str = ""
+    source: str = Field(
+        description=(
+            "Image URI. Accepts valid URI including:\n"
+            "- Local files via 'file://' scheme (e.g., file:///path/to/image.png)\n"
+            "- Remote images via 'http://' or 'https://'\n"
+            # "- Other standard URI formats (e.g., data URIs)\n"
+        )
+    )
+    alt: str = Field(default="", description="Alternative text for image")
 
     def __str__(self) -> str:
         return "\n"
 
     def asmarkdown(self, source=None) -> str:
         if source is None:
-            if isinstance(self.source, list):
-                source = self.source[0]
-            else:
-                source = self.source
+            source = self.source
         return f"![{self.alt}]({source})  \n"
 
 
