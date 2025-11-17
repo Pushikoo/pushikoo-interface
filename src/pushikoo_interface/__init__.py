@@ -40,7 +40,7 @@ __all__ = [
     "PusherConfig",
     "PusherInstanceConfig",
     # util
-    "get_adapter_config_types"
+    "get_adapter_config_types",
     # Struct
     "StructElement",
     "StructText",
