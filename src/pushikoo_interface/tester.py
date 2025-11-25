@@ -11,7 +11,11 @@ from pushikoo_interface import (
     AdapterInstanceConfig,
     Detail,
     Getter,
+    Pusher,
+    Processer,
     get_adapter_config_types,
+    Struct,
+    StructText,
 )
 
 
@@ -133,3 +137,86 @@ def run_getter_basic_flow(
         pass
 
     return ids, detail, agg
+
+
+def run_pusher_basic_flow(
+    adapter_type: type[Adapter], context: AdapterFrameworkContext
+) -> None:
+    """
+    Basic smoke test for a Pusher adapter.
+
+    This test verifies that:
+    1. The adapter can be instantiated correctly with a mock context.
+    2. The `push()` method can accept a Struct content and execute without errors.
+
+    Args:
+        adapter_type: The Adapter subclass under test.
+        context: An instance of `AdapterFrameworkContext`, providing config and paths.
+
+    Returns:
+        None
+    """
+    UnderTestAdapterClass = adapter_type
+    ctx = context
+
+    # Import Pusher class to check if it's a Pusher
+    assert issubclass(UnderTestAdapterClass, Pusher), (
+        "Adapter under test is not a Pusher subclass"
+    )
+
+    pusher = UnderTestAdapterClass.create(identifier="123", ctx=ctx)
+
+    # Create a simple test Struct
+    test_struct = Struct()
+    test_struct.append(StructText(text="Test content for pusher"))
+
+    # Test push method - should not raise any exceptions
+    try:
+        pusher.push(test_struct)
+    except Exception as e:
+        raise AssertionError(f"pusher.push() failed with error: {e}")
+
+
+def run_processer_basic_flow(
+    adapter_type: type[Adapter], context: AdapterFrameworkContext
+) -> Struct:
+    """
+    Basic smoke test for a Processer adapter.
+
+    This test verifies that:
+    1. The adapter can be instantiated correctly with a mock context.
+    2. The `process()` method can accept a Struct content and return a processed Struct.
+    3. The returned value is a valid Struct object.
+
+    Args:
+        adapter_type: The Adapter subclass under test.
+        context: An instance of `AdapterFrameworkContext`, providing config and paths.
+
+    Returns:
+        The processed Struct returned by the processer
+    """
+    UnderTestAdapterClass = adapter_type
+    ctx = context
+
+    assert issubclass(UnderTestAdapterClass, Processer), (
+        "Adapter under test is not a Processer subclass"
+    )
+
+    processer = UnderTestAdapterClass.create(identifier="123", ctx=ctx)
+
+    # Create a simple test Struct
+    test_struct = Struct()
+    test_struct.append(StructText(text="Test content for processer"))
+
+    # Test process method
+    try:
+        processed_struct = processer.process(test_struct)
+    except Exception as e:
+        raise AssertionError(f"processer.process() failed with error: {e}")
+
+    # Verify the returned value is a Struct
+    assert isinstance(processed_struct, Struct), (
+        "processer.process() return-value is not a valid Struct object"
+    )
+
+    return processed_struct

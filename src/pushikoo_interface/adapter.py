@@ -228,12 +228,47 @@ class Pusher(
     def push(self, content: Struct) -> None: ...
 
 
+class TerminateFlowException(Exception): ...
+
+
+class ProcesserConfig(AdapterConfig): ...
+
+
+class ProcesserInstanceConfig(AdapterInstanceConfig): ...
+
+
+class Processer(
+    Adapter[TADAPTERCONFIG, TADAPTERINSTANCECONFIG],
+    Generic[TADAPTERCONFIG, TADAPTERINSTANCECONFIG],
+):
+    _default_config_type = ProcesserConfig
+    _default_instance_config_type = ProcesserInstanceConfig
+
+    @abstractmethod
+    def process(self, content: Struct) -> Struct:
+        """Process the content and return modified content.
+
+        This method processes the input content and returns the modified version.
+        The processor can transform, filter, or enhance the content as needed.
+
+        Args:
+            content: Input content to be processed
+
+        Returns:
+            Struct: Processed content
+
+        Raises:
+            TerminateFlow: Can be raised to terminate the flow processing
+        """
+        ...
+
+
 def get_adapter_config_types(
     cls: type,
 ) -> tuple[type[AdapterConfig], type[AdapterInstanceConfig]]:
-    """Return generic config types for an Adapter/Getter/Pusher subclass.
+    """Return generic config types for an Adapter subclass.
 
-    Given a class (possibly subclass of Adapter/Getter/Pusher), attempt to
+    Given a class (possibly subclass of Adapter), attempt to
     extract its generic parameters (class-config model, instance-config model).
     Falls back to the class attributes `_default_config_type` and
     `_default_instance_config_type` if generics are not explicitly specified.
@@ -241,11 +276,11 @@ def get_adapter_config_types(
     `AdapterInstanceConfig`.
     """
 
-    # 1) Inspect generic bases to find concrete args provided to Adapter/Getter/Pusher
+    # 1) Inspect generic bases to find concrete args provided to Adapter
     def _find_generic_args(c: type) -> tuple[type | None, type | None]:
         for base in getattr(c, "__orig_bases__", ()):  # type: ignore[attr-defined]
             origin = get_origin(base)
-            if origin in {Adapter, Getter, Pusher}:
+            if origin in {Adapter, Getter, Pusher, Processer}:
                 args = get_args(base)
                 if len(args) == 2:
                     a0, a1 = args
