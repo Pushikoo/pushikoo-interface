@@ -26,7 +26,9 @@ def get_adapter_test_env(
     adapter_instance_config: AdapterInstanceConfig = None,
     storage_base_path: Path | None = None,
 ) -> tuple[type[Adapter], AdapterFrameworkContext]:
-    adapter_name = tomllib.loads(project_toml_path.read_text())["project"]["name"]
+    adapter_name = tomllib.loads(project_toml_path.read_text(encoding="utf-8"))[
+        "project"
+    ]["name"]
 
     eps = md.entry_points(group="pushikoo.adapter")
     ep = next((e for e in eps if getattr(e.dist, "name", None) == adapter_name), None)
