@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/Pushikoo/pushikoo-interface/compare/v0.3.0...v0.3.1) (2025-12-15)
+
+
+### Bug Fixes
+
+* **tester:** specify encoding when reading project toml file ([d86f510](https://github.com/Pushikoo/pushikoo-interface/commit/d86f51051fd908f1a086b7b1157371145d8ae70f))
+
 ## [0.3.0](https://github.com/Pushikoo/pushikoo-interface/compare/v0.2.0...v0.3.0) (2025-11-25)
 
 
