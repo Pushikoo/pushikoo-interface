@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.0](https://github.com/Pushikoo/pushikoo-interface/compare/v0.4.0...v1.0.0) (2025-12-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove playwright from context
+
+### Code Refactoring
+
+* remove playwright from context ([7fb4ec9](https://github.com/Pushikoo/pushikoo-interface/commit/7fb4ec9e29c94701bb972628087467e0a07626be))
+
 ## [0.4.0](https://github.com/Pushikoo/pushikoo-interface/compare/v0.3.1...v0.4.0) (2025-12-17)
 
 
