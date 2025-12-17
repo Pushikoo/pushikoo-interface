@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Callable, Generic, TypeVar, final, get_args, get_origin
 
+from playwright.async_api import BrowserContext
 from pydantic import BaseModel, ConfigDict, Field
 
 from pushikoo_interface import util
@@ -29,6 +30,8 @@ class AdapterFrameworkContext(ABC):
     get_proxies: Callable[[], dict[str, str]]
     get_config: Callable[[], BaseModel]
     get_instance_config: Callable[[], BaseModel]
+
+    create_playwright_browser_context: Callable[..., BrowserContext]
 
 
 class AdapterConfig(BaseModel): ...
