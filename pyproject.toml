@@ -8,10 +8,7 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "Operating System :: OS Independent",
 ]
-dependencies = [
-    "playwright>=1.57.0",
-    "pydantic",
-]
+dependencies = ["pydantic"]
 description = "Adapter interface definitions for Pushikoo"
 name = "pushikoo-interface"
 readme = "README.md"
