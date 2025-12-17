@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/Pushikoo/pushikoo-interface/compare/v0.3.1...v0.4.0) (2025-12-17)
+
+
+### Features
+
+* **adapter:** add playwright browser context support ([ff65d6b](https://github.com/Pushikoo/pushikoo-interface/commit/ff65d6b3d28edfc631899f38ebccd24c5bbcc948))
+
 ## [0.3.1](https://github.com/Pushikoo/pushikoo-interface/compare/v0.3.0...v0.3.1) (2025-12-15)
 
 
