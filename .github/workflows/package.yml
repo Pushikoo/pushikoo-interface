@@ -41,6 +41,8 @@ jobs:
         run: uv sync
 
       - name: Build distributions
+        env:
+          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ needs.release-please.outputs.tag_name }}
         run: uv build
 
       - name: Upload distributions
@@ -82,9 +84,6 @@ jobs:
     permissions:
       contents: read
       id-token: write
-
-    environment:
-      name: release
 
     steps:
       - name: Retrieve release distributions
