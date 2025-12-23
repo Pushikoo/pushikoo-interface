@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/Pushikoo/pushikoo-interface/compare/v1.0.1...v1.0.2) (2025-12-23)
+
+
+### Bug Fixes
+
+* **util:** failed to run basic test flow after migrated to hatch ([12ece44](https://github.com/Pushikoo/pushikoo-interface/commit/12ece443635c73f04a4b7d4e610f38d22da43852))
+
 ## [1.0.1](https://github.com/Pushikoo/pushikoo-interface/compare/v1.0.0...v1.0.1) (2025-12-23)
 
 
