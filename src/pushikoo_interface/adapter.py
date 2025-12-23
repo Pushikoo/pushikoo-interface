@@ -4,8 +4,8 @@ from typing import Any, Callable, Generic, TypeVar, final, get_args, get_origin
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from pushikoo_interface import util
 from pushikoo_interface.structure import Struct, StructImage
+from pushikoo_interface.util import classproperty, get_dist_meta
 
 TADAPTERCONFIG = TypeVar("TADAPTERCONFIG", bound="AdapterConfig")
 TADAPTERINSTANCECONFIG = TypeVar(
@@ -42,15 +42,14 @@ class Adapter(ABC, Generic[TADAPTERCONFIG, TADAPTERINSTANCECONFIG]):
     _default_instance_config_type: type
 
     ctx: AdapterFrameworkContext
-    meta: AdapterMeta
     adapter_name: str
     identifier: str
     adapter_storage_path: Path
     instance_storage_path: Path
 
-    @staticmethod
-    def _get_meta(cls):
-        dist_name, dist_version, dist_metadata = util.get_dist_meta(cls)
+    @classproperty
+    def meta(cls) -> AdapterMeta:
+        dist_name, dist_version, dist_metadata = get_dist_meta(cls)
         url = dist_metadata.json.get("home_page")
         if url is None:
             url: str | None = dist_metadata.json.get("project_url", [None])[0]
@@ -79,10 +78,6 @@ class Adapter(ABC, Generic[TADAPTERCONFIG, TADAPTERINSTANCECONFIG]):
             },
         )
         return meta
-
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        cls.meta = Adapter._get_meta(cls)
 
     @classmethod
     @final

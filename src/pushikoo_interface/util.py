@@ -1,4 +1,16 @@
 from importlib.metadata import distribution, packages_distributions
+from typing import Callable, Generic, TypeVar
+
+
+TPropertyValue = TypeVar("T")
+
+
+class classproperty(Generic[TPropertyValue]):
+    def __init__(self, func: Callable[[type], TPropertyValue]) -> None:
+        self.func = func
+
+    def __get__(self, instance: object, owner: type) -> TPropertyValue:
+        return self.func(owner)
 
 
 def get_dist_meta(class_: type):
