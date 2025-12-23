@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/Pushikoo/pushikoo-interface/compare/v1.0.0...v1.0.1) (2025-12-23)
+
+
+### Bug Fixes
+
+* **adapter:** convert meta to classproperty and reorganize imports ([674ef99](https://github.com/Pushikoo/pushikoo-interface/commit/674ef992e5b0eebcfee525f31f40124f12350006))
+
 ## [1.0.0](https://github.com/Pushikoo/pushikoo-interface/compare/v0.4.0...v1.0.0) (2025-12-17)
 
 
