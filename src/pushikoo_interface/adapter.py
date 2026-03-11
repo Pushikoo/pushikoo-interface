@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Callable, Generic, TypeVar, final, get_args, get_origin
 
+from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict, Field
 
 from pushikoo_interface.structure import Struct, StructImage
@@ -110,6 +111,15 @@ class Adapter(ABC, Generic[TADAPTERCONFIG, TADAPTERINSTANCECONFIG]):
 
     def __hash__(self) -> int:
         return hash(str(self))
+
+    @classmethod
+    def get_adapter_router(cls) -> APIRouter:
+        """Return a FastAPI APIRouter for adapter-level web endpoints."""
+        raise NotImplementedError
+
+    def get_instance_router(self) -> APIRouter:
+        """Return a FastAPI APIRouter for instance-level web endpoints."""
+        raise NotImplementedError
 
 
 class Detail(BaseModel):
