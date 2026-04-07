@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/Pushikoo/pushikoo-interface/compare/v1.2.0...v1.3.0) (2026-04-07)
+
+
+### Miscellaneous Chores
+
+* trigger ci ([edf1541](https://github.com/Pushikoo/pushikoo-interface/commit/edf1541edf889be616378796d0e2777f4922bee0))
+
 ## [1.2.0](https://github.com/Pushikoo/pushikoo-interface/compare/v1.1.0...v1.2.0) (2026-04-07)
 
 
