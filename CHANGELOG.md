@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/Pushikoo/pushikoo-interface/compare/v1.1.0...v1.2.0) (2026-04-07)
+
+
+### Features
+
+* **adapter:** add base URL fields to AdapterFrameworkContext ([fba5c47](https://github.com/Pushikoo/pushikoo-interface/commit/fba5c47669c9eb505f8bd6a54ffeca1493486bcd))
+
 ## [1.1.0](https://github.com/Pushikoo/pushikoo-interface/compare/v1.0.2...v1.1.0) (2026-03-11)
 
 
