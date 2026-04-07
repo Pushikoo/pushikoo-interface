@@ -27,6 +27,9 @@ class AdapterMeta(BaseModel):
 class AdapterFrameworkContext(ABC):
     storage_base_path: Path
 
+    adapter_base_url: str
+    instance_base_url: str
+
     get_proxies: Callable[[], dict[str, str]]
     get_config: Callable[[], BaseModel]
     get_instance_config: Callable[[], BaseModel]
