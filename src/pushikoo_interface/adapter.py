@@ -88,13 +88,8 @@ class Adapter(ABC, Generic[TADAPTERCONFIG, TADAPTERINSTANCECONFIG]):
     def create(cls, *args, identifier: str, ctx: Any, **kwargs):
         obj = cls.__new__(cls)
         obj.ctx = ctx
-
-        obj.adapter_name = obj.meta.name
         obj.identifier = identifier
-        storage_base = obj.ctx.storage_base_path
-        obj.adapter_storage_path = storage_base / obj.adapter_name
         obj.instance_storage_path = obj.adapter_storage_path / obj.identifier
-        obj.adapter_storage_path.mkdir(parents=True, exist_ok=True)
         obj.instance_storage_path.mkdir(parents=True, exist_ok=True)
 
         cls.__init__(obj, *args, **kwargs)
