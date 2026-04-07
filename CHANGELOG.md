@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/Pushikoo/pushikoo-interface/compare/v1.3.0...v1.4.0) (2026-04-07)
+
+
+### Features
+
+* **adapter:** add verify_token to AdapterFrameworkContext ([724b69f](https://github.com/Pushikoo/pushikoo-interface/commit/724b69f87ca126c123b29fee958c2b54b685941b))
+
 ## [1.3.0](https://github.com/Pushikoo/pushikoo-interface/compare/v1.2.0...v1.3.0) (2026-04-07)
 
 
