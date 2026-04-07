@@ -33,6 +33,7 @@ class AdapterFrameworkContext(ABC):
     get_proxies: Callable[[], dict[str, str]]
     get_config: Callable[[], BaseModel]
     get_instance_config: Callable[[], BaseModel]
+    verify_token: Callable[..., Any]
 
 
 class AdapterConfig(BaseModel): ...
