@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/Pushikoo/pushikoo-interface/compare/v1.0.2...v1.1.0) (2026-03-11)
+
+
+### Features
+
+* **adapter:** add FastAPI router support to Adapter base class ([4e0a71f](https://github.com/Pushikoo/pushikoo-interface/commit/4e0a71f4ab266d6b8c73ee717ee6fcf284eaf55d))
+
 ## [1.0.2](https://github.com/Pushikoo/pushikoo-interface/compare/v1.0.1...v1.0.2) (2025-12-23)
 
 
