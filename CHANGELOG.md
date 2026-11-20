@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/Pushikoo/pushikoo-interface/compare/v1.4.0...v1.5.0) (2026-11-20)
+
+
+### Features
+
+* **adapter:** add read_image to AdapterFrameworkContext ([ad0a72b](https://github.com/Pushikoo/pushikoo-interface/commit/ad0a72bfaf3ee2b97cea3f84dbf3782fe376e8b5))
+
 ## [1.4.0](https://github.com/Pushikoo/pushikoo-interface/compare/v1.3.0...v1.4.0) (2026-04-07)
 
 
