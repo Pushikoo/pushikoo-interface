@@ -8,12 +8,13 @@ from pushikoo_interface.adapter import (
     Getter,
     GetterConfig,
     GetterInstanceConfig,
-    Pusher,
-    PusherConfig,
-    PusherInstanceConfig,
+    ImageBlob,
     Processer,
     ProcesserConfig,
     ProcesserInstanceConfig,
+    Pusher,
+    PusherConfig,
+    PusherInstanceConfig,
     TerminateFlowException,
     get_adapter_config_types,
 )
@@ -39,6 +40,7 @@ __all__ = [
     "AdapterInstanceConfig",
     "AdapterFrameworkContext",
     "AdapterMeta",
+    "ImageBlob",
     # Data result
     "Detail",
     # Getter

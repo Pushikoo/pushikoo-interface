@@ -1,6 +1,13 @@
+import mimetypes
+import os
+import re
 from abc import ABC, abstractmethod
+from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Generic, TypeVar, final, get_args, get_origin
+from typing import Any, Generic, TypeVar, final, get_args, get_origin
+from urllib.parse import unquote, urlsplit
+from urllib.request import ProxyHandler, Request, build_opener
 
 from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict, Field
@@ -12,6 +19,15 @@ TADAPTERCONFIG = TypeVar("TADAPTERCONFIG", bound="AdapterConfig")
 TADAPTERINSTANCECONFIG = TypeVar(
     "TADAPTERINSTANCECONFIG", bound="AdapterInstanceConfig"
 )
+IMAGE_DOWNLOAD_MAX_BYTES = 50 * 1024 * 1024
+WINDOWS_DRIVE_PATH = re.compile(r"^[A-Za-z]:[\\/]")
+
+
+@dataclass
+class ImageBlob:
+    data: bytes
+    content_type: str | None
+    filename: str
 
 
 class AdapterMeta(BaseModel):
@@ -34,6 +50,83 @@ class AdapterFrameworkContext(ABC):
     get_config: Callable[[], BaseModel]
     get_instance_config: Callable[[], BaseModel]
     verify_token: Callable[..., Any]
+
+    def read_image(self, source: str, *, timeout: float = 60) -> ImageBlob:
+        """Read an image from HTTP(S), a file URI, or a local path."""
+        if WINDOWS_DRIVE_PATH.match(source):
+            path = Path(source)
+            return ImageBlob(
+                data=path.read_bytes(),
+                content_type=mimetypes.guess_type(path.name)[0],
+                filename=path.name or "image",
+            )
+
+        parsed = urlsplit(source)
+        scheme = parsed.scheme.lower()
+        if scheme in {"http", "https"}:
+            handlers = []
+            get_proxies = getattr(self, "get_proxies", None)
+            if callable(get_proxies):
+                proxies = get_proxies()
+                if proxies:
+                    handlers.append(ProxyHandler(proxies))
+            opener = build_opener(*handlers)
+            request = Request(source, headers={"User-Agent": "Pushikoo/1.5"})
+            with opener.open(request, timeout=timeout) as response:
+                content_length = response.headers.get("Content-Length")
+                if content_length is not None:
+                    try:
+                        content_length_bytes = int(content_length)
+                    except ValueError:
+                        pass
+                    else:
+                        if content_length_bytes > IMAGE_DOWNLOAD_MAX_BYTES:
+                            raise ValueError(
+                                f"Image exceeds {IMAGE_DOWNLOAD_MAX_BYTES} byte limit"
+                            )
+
+                data = response.read(IMAGE_DOWNLOAD_MAX_BYTES + 1)
+                if len(data) > IMAGE_DOWNLOAD_MAX_BYTES:
+                    raise ValueError(
+                        f"Image exceeds {IMAGE_DOWNLOAD_MAX_BYTES} byte limit"
+                    )
+
+                filename = Path(unquote(parsed.path)).name or "image"
+                content_type = (
+                    response.headers.get("Content-Type", "").split(";", 1)[0].strip()
+                    or mimetypes.guess_type(filename)[0]
+                )
+                return ImageBlob(
+                    data=data,
+                    content_type=content_type,
+                    filename=filename,
+                )
+
+        if scheme == "file":
+            path_text = unquote(parsed.path)
+            if parsed.netloc:
+                path_text = f"//{unquote(parsed.netloc)}{path_text}"
+            elif path_text.startswith("//"):
+                # Some producers build a URI as "file:///" + "/abs/path".
+                path_text = "/" + path_text.lstrip("/")
+            elif (
+                os.name == "nt"
+                and len(path_text) >= 3
+                and path_text[0] == "/"
+                and path_text[2] == ":"
+            ):
+                path_text = path_text[1:]
+            path = Path(path_text)
+        elif not scheme:
+            path = Path(source)
+        else:
+            raise ValueError(f"Unsupported image source scheme: {scheme}")
+
+        return ImageBlob(
+            data=path.read_bytes(),
+            content_type=mimetypes.guess_type(path.name)[0],
+            filename=path.name or "image",
+        )
 
 
 class AdapterConfig(BaseModel): ...
